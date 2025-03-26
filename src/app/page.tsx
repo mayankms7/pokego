@@ -1,103 +1,180 @@
+"use client";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+interface PokemonType {
+  type: {
+    name: string;
+  }
+}
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+interface PokemonStat {
+  base_stat: number;
+  stat: {
+    name: string;
+  }
+}
+
+interface Pokemon {
+  name: string;
+  sprites: {
+    front_default: string;
+  };
+  types: PokemonType[];
+  stats: PokemonStat[];
+}
+
+export default function Home() {
+  const [search, setSearch] = useState("1");
+  const [pokemon, setPokemon] = useState<Pokemon | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const getPokemonTypeColor = (type: string): string => {
+    const typeColors: Record<string, string> = {
+      fire: "bg-orange-100 text-orange-800 border-orange-300",
+      water: "bg-blue-100 text-blue-800 border-blue-300",
+      grass: "bg-green-100 text-green-800 border-green-300",
+      electric: "bg-yellow-100 text-yellow-800 border-yellow-300",
+      psychic: "bg-pink-100 text-pink-800 border-pink-300",
+      ice: "bg-cyan-100 text-cyan-800 border-cyan-300",
+      dragon: "bg-indigo-100 text-indigo-800 border-indigo-300",
+      default: "bg-gray-100 text-gray-800 border-gray-300",
+    };
+    return typeColors[type] || typeColors.default;
+  };
+
+  useEffect(() => {
+    if (search) {
+      setIsLoading(true);
+      fetch(`https://pokeapi.co/api/v2/pokemon/${search}`)
+        .then((res) => res.json())
+        .then((data: Pokemon) => {
+          if ('error' in data) {
+            setError('Pokemon not found');
+            setPokemon(null);
+          } else {
+            setPokemon(data);
+            setError(null);
+          }
+        })
+        .catch((err) => {
+          setError("Failed to fetch Pokémon");
+          setPokemon(null);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    }
+  }, [search]);
+
+  return (
+    <div className="min-h-screen bg-white justify-center w-screen from-white via-blue-50 to-purple-50 flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Decorative Pokéball Background */}
+      <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+        <div className="absolute -top-20 -left-20 w-96 h-96 bg-red-100 rounded-full"></div>
+        <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-blue-100 rounded-full"></div>
+      </div>
+
+      <div className="relative z-10 w-full max-w-md bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-gray-100 p-8 transform transition-all hover:scale-[1.02]">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 mb-2">
+            Pokédex
+          </h1>
+          <p className="text-gray-500 text-lg">Explore Pokémon Wonders</p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+
+        {/* Search Input */}
+        <div className="mb-6">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value.toLowerCase())}
+            placeholder="Search Pokémon by name or ID"
+            className="w-full text-black px-5 py-4 rounded-2xl border-2 border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-200/50 transition-all text-lg"
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        </div>
+
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex justify-center items-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-500"></div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-2xl text-center">
+            {error}
+          </div>
+        )}
+
+        {/* Pokemon Display */}
+        {pokemon && !isLoading && (
+          <div className="bg-white rounded-3xl p-6 shadow-lg border border-gray-100">
+            <div className="flex flex-col items-center">
+              {/* Pokemon Name */}
+              <h2 className="text-3xl font-bold text-gray-800 mb-4 capitalize">
+                {pokemon.name}
+              </h2>
+
+              {/* Pokemon Image */}
+              <div className="mb-6 p-4 bg-gray-50 rounded-full">
+                <Image
+                  src={pokemon.sprites.front_default}
+                  alt={pokemon.name}
+                  width={250}
+                  height={250}
+                  className="transition-transform hover:scale-110"
+                />
+              </div>
+
+              {/* Pokemon Types */}
+              <div className="flex space-x-2 mb-6">
+                {pokemon.types.map((type) => (
+                  <span
+                    key={type.type.name}
+                    className={`px-4 py-1 rounded-full text-sm font-semibold ${getPokemonTypeColor(
+                      type.type.name
+                    )}`}
+                  >
+                    {type.type.name}
+                  </span>
+                ))}
+              </div>
+
+              {/* Pokemon Stats */}
+              <div className="w-full">
+                <h3 className="text-xl font-semibold text-gray-700 mb-4 text-center">
+                  Base Stats
+                </h3>
+                <div className="space-y-2">
+                  {pokemon.stats.map((stat) => (
+                    <div
+                      key={stat.stat.name}
+                      className="flex items-center space-x-3"
+                    >
+                      <div className="w-1/3 text-gray-600 capitalize">
+                        {stat.stat.name.replace("-", " ")}
+                      </div>
+                      <div className="w-2/3 bg-gray-200 rounded-full h-2.5">
+                        <div
+                          className="bg-blue-600 h-2.5 rounded-full"
+                          style={{ width: `${Math.min(stat.base_stat, 100)}%` }}
+                        ></div>
+                      </div>
+                      <div className="w-10 text-right text-gray-700">
+                        {stat.base_stat}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
